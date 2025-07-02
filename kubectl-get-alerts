@@ -1,0 +1,30 @@
+#!/bin/bash
+# This is a kubectl plugin to simulate 'kubectl get alerts'
+# Save as kubectl-get-alerts and make executable
+
+echo "NAME                  SEVERITY    STATUS    AGE"
+echo "----                  --------    ------    ---"
+
+# Check for alerts in ConfigMaps
+kubectl get configmap -l type=alert -o json 2>/dev/null | jq -r '.items[] | 
+  .metadata.name + " " + 
+  (.data.alert | fromjson | .severity) + " " + 
+  (.data.alert | fromjson | .status) + " " + 
+  .metadata.creationTimestamp' | \
+while read name severity status timestamp; do
+    # Calculate age
+    created=$(date -d "$timestamp" +%s 2>/dev/null || date +%s)
+    now=$(date +%s)
+    age=$((now - created))
+    
+    # Format age
+    if [ $age -lt 60 ]; then
+        age_str="${age}s"
+    elif [ $age -lt 3600 ]; then
+        age_str="$((age / 60))m"
+    else
+        age_str="$((age / 3600))h"
+    fi
+    
+    printf "%-20s %-11s %-9s %s\n" "$name" "$severity" "$status" "$age_str"
+done
