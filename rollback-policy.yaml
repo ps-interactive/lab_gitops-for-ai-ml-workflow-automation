@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rollback-policy
+data:
+  policy.json: |
+    {
+      "rollback_conditions": {
+        "accuracy_threshold": 0.90,
+        "error_rate_threshold": 0.05,
+        "latency_threshold_ms": 1000,
+        "consecutive_failures": 3
+      },
+      "rollback_strategy": {
+        "type": "immediate",
+        "target": "previous_stable_version",
+        "notification": "enabled"
+      },
+      "health_check": {
+        "interval_seconds": 30,
+        "timeout_seconds": 10,
+        "success_threshold": 2,
+        "failure_threshold": 3
+      }
+    }
