@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: anomaly-detector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: anomaly-detector
+  template:
+    metadata:
+      labels:
+        app: anomaly-detector
+    spec:
+      containers:
+      - name: detector
+        image: python:3.9-slim
+        command:
+        - python
+        - -c
+        - |
+          import time
+          import random
+          import json
+          
+          def detect_anomaly(data_point):
+              # Simple threshold-based anomaly detection
+              threshold = 2.0
+              mean = 1.0
+              deviation = abs(data_point - mean)
+              return deviation > threshold
+          
+          print("Starting anomaly detection...")
+          
+          while True:
+              # Simulate incoming data
+              data_point = random.gauss(1.0, 0.5)
+              
+              # Add occasional anomalies
+              if random.random() < 0.1:
+                  data_point = random.uniform(5, 10)
+              
+              is_anomaly = detect_anomaly(data_point)
+              
+              result = {
+                  "timestamp": time.time(),
+                  "value": data_point,
+                  "is_anomaly": is_anomaly
+              }
+              
+              if is_anomaly:
+                  print(f"ANOMALY DETECTED: {json.dumps(result)}")
+              else:
+                  print(f"Normal: value={data_point:.2f}")
+              
+              time.sleep(5)
