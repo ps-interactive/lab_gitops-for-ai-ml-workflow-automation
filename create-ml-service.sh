@@ -48,17 +48,8 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
 EOF
 
-# Build and push to local registry
+# Build Docker image
 docker build -f Dockerfile.ml -t ml-predictor:latest .
-docker tag ml-predictor:latest localhost:5000/ml-predictor:latest
-
-# Start a local registry if not exists
-if ! docker ps | grep -q registry; then
-    docker run -d -p 5000:5000 --name registry registry:2
-fi
-
-# Push to local registry
-docker push localhost:5000/ml-predictor:latest
 
 # Create Knative service YAML
 cat > ml-service.yaml << 'EOF'
@@ -74,7 +65,8 @@ spec:
         autoscaling.knative.dev/maxScale: "10"
     spec:
       containers:
-        - image: localhost:5000/ml-predictor:latest
+        - image: ml-predictor:latest
+          imagePullPolicy: Never
           env:
             - name: MODEL_VERSION
               value: "1.0"
@@ -86,5 +78,8 @@ spec:
               memory: "512Mi"
               cpu: "500m"
 EOF
+
+# Import the image into k3d
+k3d image import ml-predictor:latest -c ml-cluster
 
 echo "ML service created successfully!"
