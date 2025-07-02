@@ -2,23 +2,25 @@
 
 echo "Testing rollback mechanism..."
 
-# Get current revision
-CURRENT_REV=$(kubectl get ksvc ml-predictor -o jsonpath='{.status.latestCreatedRevisionName}')
-echo "Current revision: $CURRENT_REV"
+# Get current deployment state
+CURRENT_IMAGE=$(kubectl get deployment ml-predictor -o jsonpath='{.spec.template.spec.containers[0].image}')
+CURRENT_ENV=$(kubectl get deployment ml-predictor -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="MODEL_VERSION")].value}')
+echo "Current model version: $CURRENT_ENV"
 
 # Trigger rollback to previous revision
 echo "Initiating rollback..."
-kubectl annotate ksvc ml-predictor rollback.trigger="manual-$(date +%s)" --overwrite
+kubectl rollout undo deployment/ml-predictor
 
 # Wait for rollback
-sleep 5
+echo "Waiting for rollback to complete..."
+kubectl rollout status deployment/ml-predictor
 
-# Check new revision
-NEW_REV=$(kubectl get ksvc ml-predictor -o jsonpath='{.status.latestReadyRevisionName}')
-echo "Active revision after rollback: $NEW_REV"
+# Check new state
+NEW_ENV=$(kubectl get deployment ml-predictor -o jsonpath='{.spec.template.spec.containers[0].env[?(@.name=="MODEL_VERSION")].value}')
+echo "Model version after rollback: $NEW_ENV"
 
-if [ "$CURRENT_REV" != "$NEW_REV" ]; then
+if [ "$CURRENT_ENV" != "$NEW_ENV" ]; then
     echo "Rollback successful!"
 else
-    echo "Rollback may not have been necessary - service is stable"
+    echo "Rollback may not have been necessary - deployment is stable"
 fi
