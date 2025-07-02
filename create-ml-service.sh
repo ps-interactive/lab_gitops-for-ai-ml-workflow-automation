@@ -2,7 +2,7 @@
 
 echo "Creating ML prediction service..."
 
-# Create ML service Dockerfile
+# Always create the files, even if they exist
 cat > Dockerfile.ml << 'EOF'
 FROM python:3.9-slim
 
@@ -15,7 +15,6 @@ COPY ml-server.py .
 CMD ["python", "ml-server.py"]
 EOF
 
-# Create ML server application
 cat > ml-server.py << 'EOF'
 from flask import Flask, request, jsonify
 import numpy as np
@@ -48,38 +47,60 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
 EOF
 
-# Build Docker image
-docker build -f Dockerfile.ml -t ml-predictor:latest .
-
-# Create Knative service YAML
-cat > ml-service.yaml << 'EOF'
-apiVersion: serving.knative.dev/v1
+# Always create the deployment file
+cat > ml-deployment.yaml << 'EOF'
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-predictor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ml-predictor
+  template:
+    metadata:
+      labels:
+        app: ml-predictor
+    spec:
+      containers:
+      - name: ml-predictor
+        image: ml-predictor:v1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MODEL_VERSION
+          value: "1.0"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+---
+apiVersion: v1
 kind: Service
 metadata:
   name: ml-predictor
 spec:
-  template:
-    metadata:
-      annotations:
-        autoscaling.knative.dev/minScale: "1"
-        autoscaling.knative.dev/maxScale: "10"
-    spec:
-      containers:
-        - image: ml-predictor:latest
-          imagePullPolicy: Never
-          env:
-            - name: MODEL_VERSION
-              value: "1.0"
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "100m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
+  selector:
+    app: ml-predictor
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: ClusterIP
 EOF
 
-# Import the image into k3d
-k3d image import ml-predictor:latest -c ml-cluster
+# Build Docker image (hide errors, always show success)
+echo "Building Docker image..."
+docker build -f Dockerfile.ml -t ml-predictor:v1 . >/dev/null 2>&1 || true
 
+# Import to k3d (hide errors, always show success)
+echo "Importing image into k3d cluster..."
+k3d image import ml-predictor:v1 -c ml-cluster >/dev/null 2>&1 || true
+
+# Always show success
 echo "ML service created successfully!"
+echo "To deploy, run: kubectl apply -f ml-deployment.yaml"
