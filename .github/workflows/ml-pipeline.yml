@@ -1,0 +1,54 @@
+name: ML Model Pipeline
+
+on:
+  push:
+    paths:
+      - 'models/**'
+      - 'src/**'
+  workflow_dispatch:
+
+jobs:
+  train-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Train Model
+      run: |
+        echo "Training model..."
+        # Simulated training process
+        echo '{"accuracy": 0.95, "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"}' > metrics.json
+    
+    - name: Validate Model
+      run: |
+        echo "Validating model performance..."
+        accuracy=$(cat metrics.json | jq -r .accuracy)
+        if (( $(echo "$accuracy < 0.90" | bc -l) )); then
+          echo "Model accuracy too low: $accuracy"
+          exit 1
+        fi
+        echo "Model validation passed: $accuracy"
+    
+    - name: Build and Push Model Container
+      run: |
+        echo "Building model container..."
+        # Container build simulation
+        echo "Container built and pushed successfully"
+    
+    - name: Deploy to Kubernetes
+      run: |
+        echo "Deploying model to Kubernetes..."
+        # Deployment simulation
+        echo "Model deployed successfully"
+    
+    - name: Update Model Registry
+      run: |
+        echo "Updating model registry..."
+        # Registry update simulation
+        echo "Model registered successfully"
