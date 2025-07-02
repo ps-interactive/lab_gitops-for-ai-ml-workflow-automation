@@ -2,32 +2,17 @@
 
 echo "Simulating deployment of a faulty model..."
 
-# Create a bad model configuration
-cat > bad-model.yaml << 'EOF'
-apiVersion: serving.knative.dev/v1
-kind: Service
-metadata:
-  name: ml-predictor
-spec:
-  template:
-    metadata:
-      annotations:
-        autoscaling.knative.dev/minScale: "1"
-        rollback.enabled: "true"
-    spec:
-      containers:
-        - image: localhost:5000/ml-predictor:latest
-          env:
-            - name: MODEL_VERSION
-              value: "bad-1.0"
-            - name: SIMULATE_ERROR
-              value: "true"
-            - name: ERROR_RATE
-              value: "0.8"
-EOF
-
-# Apply the bad configuration
+# Update deployment to simulate a bad model
 echo "Deploying faulty model version..."
-kubectl apply -f bad-model.yaml
+kubectl set env deployment/ml-predictor \
+  MODEL_VERSION=bad-1.0 \
+  SIMULATE_ERROR=true \
+  ERROR_RATE=0.8
+
+# Add annotation to track this as a bad deployment
+kubectl annotate deployment/ml-predictor \
+  rollback.reason="simulated-failure" \
+  rollback.enabled="true" \
+  --overwrite
 
 echo "Faulty model deployed. Rollback should trigger automatically."
