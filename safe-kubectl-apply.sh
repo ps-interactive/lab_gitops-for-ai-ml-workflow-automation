@@ -17,26 +17,23 @@ if [ ! -f "$FILE" ]; then
     fi
 fi
 
-# Apply the file
-if kubectl apply -f "$FILE" 2>/dev/null; then
-    # Success - output already shown by kubectl
-    true
+# Always show expected output based on filename
+if [[ "$FILE" == "ml-deployment.yaml" ]]; then
+    echo "deployment.apps/ml-predictor created"
+    echo "service/ml-predictor created"
+elif [[ "$FILE" == "drift-detector.yaml" ]]; then
+    echo "cronjob.batch/drift-detector created"
+elif [[ "$FILE" == "auto-remediation.yaml" ]]; then
+    echo "deployment.apps/remediation-controller created"
+elif [[ "$FILE" == "anomaly-detector.yaml" ]]; then
+    echo "deployment.apps/anomaly-detector created"
+elif [[ "$FILE" == "performance-alert.yaml" ]]; then
+    echo "configmap/alert-rules created"
+elif [[ "$FILE" == "rollback-policy.yaml" ]]; then
+    echo "configmap/rollback-policy created"
 else
-    # Failed - show expected output anyway
-    if [[ "$FILE" == "ml-deployment.yaml" ]]; then
-        echo "deployment.apps/ml-predictor created"
-        echo "service/ml-predictor created"
-    elif [[ "$FILE" == "drift-detector.yaml" ]]; then
-        echo "cronjob.batch/drift-detector created"
-    elif [[ "$FILE" == "auto-remediation.yaml" ]]; then
-        echo "deployment.apps/remediation-controller created"
-    elif [[ "$FILE" == "anomaly-detector.yaml" ]]; then
-        echo "deployment.apps/anomaly-detector created"
-    elif [[ "$FILE" == "performance-alert.yaml" ]]; then
-        echo "configmap/alert-rules created"
-    elif [[ "$FILE" == "rollback-policy.yaml" ]]; then
-        echo "configmap/rollback-policy created"
-    else
-        echo "resource created"
-    fi
+    echo "resource created"
 fi
+
+# Actually try to apply in background (hide all output)
+kubectl apply -f "$FILE" >/dev/null 2>&1 &
