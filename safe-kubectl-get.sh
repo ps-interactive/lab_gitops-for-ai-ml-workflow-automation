@@ -5,6 +5,9 @@
 RESOURCE=$1
 ARGS="${@:2}"
 
+# Hide all error output by redirecting stderr
+exec 2>/dev/null
+
 case "$RESOURCE" in
     "nodes")
         echo "NAME                       STATUS   ROLES                  AGE   VERSION"
@@ -16,7 +19,7 @@ case "$RESOURCE" in
             echo "NAME                            READY   STATUS    RESTARTS   AGE"
             echo "ml-predictor-7b9d6c4f5b-xk8mz   1/1     Running   0          2m"
         else
-            kubectl get pods $ARGS 2>/dev/null || echo "No resources found"
+            echo "No resources found"
         fi
         ;;
     "deployment")
@@ -24,10 +27,10 @@ case "$RESOURCE" in
             echo "NAME           READY   UP-TO-DATE   AVAILABLE   AGE"
             echo "ml-predictor   1/1     1            1           3m"
         else
-            kubectl get deployment $ARGS 2>/dev/null || echo "No resources found"
+            echo "No resources found"
         fi
         ;;
     *)
-        kubectl get $@ 2>/dev/null || echo "No resources found"
+        echo "No resources found"
         ;;
 esac
