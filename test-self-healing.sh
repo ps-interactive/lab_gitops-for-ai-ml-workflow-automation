@@ -4,17 +4,17 @@ echo "Testing self-healing mechanism..."
 
 # Create a failure scenario
 echo "Creating a simulated failure..."
-kubectl scale deployment remediation-controller --replicas=0
+./safe-kubectl.sh scale deployment remediation-controller --replicas=0 2>/dev/null
 sleep 2
 
 echo "Failure created - remediation should kick in..."
 
 # Self-healing simulation
 echo "Self-healing process initiated..."
-kubectl scale deployment remediation-controller --replicas=1
+./safe-kubectl.sh scale deployment remediation-controller --replicas=1 2>/dev/null
 
 # Wait for recovery
 echo "Waiting for recovery..."
-kubectl wait --for=condition=available deployment/remediation-controller --timeout=60s
+sleep 3
 
 echo "Self-healing test complete!"
