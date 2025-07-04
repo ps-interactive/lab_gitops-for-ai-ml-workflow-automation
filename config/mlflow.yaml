@@ -1,3 +1,0 @@
-tracking_uri: "http://localhost:5000"
-artifact_location: "s3://ml-models"
-experiment_name: "gitops-ml-experiments"
