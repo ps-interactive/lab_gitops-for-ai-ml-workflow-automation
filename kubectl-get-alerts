@@ -1,9 +1,0 @@
-#!/bin/bash
-
-# Wrapper script for getting alerts
-# Simulates alert output for the lab
-
-echo "ALERT NAME                    SEVERITY   STATUS    AGE"
-echo "ModelAccuracyLow              warning    resolved  5m"
-echo "HighPredictionLatency         critical   resolved  3m"
-echo "ModelDriftDetected            warning    pending   1m"
