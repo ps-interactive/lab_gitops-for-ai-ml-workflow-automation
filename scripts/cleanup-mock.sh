@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script removes mock commands
-echo "Cleaning up mock environment..."
+echo "Cleaning up environment..."
 
 # Remove aliases
 sed -i '/alias mc=/d' ~/.bashrc
