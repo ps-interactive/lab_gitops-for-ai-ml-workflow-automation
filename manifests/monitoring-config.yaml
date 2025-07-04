@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-monitoring-config
+  namespace: default
+data:
+  drift-threshold: "0.1"
+  accuracy-threshold: "0.85"
+  check-interval: "300"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-monitor
+  namespace: default
+spec:
+  selector:
+    app: model-monitor
+  ports:
+  - port: 8000
+    targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-monitor
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-monitor
+  template:
+    metadata:
+      labels:
+        app: model-monitor
+    spec:
+      containers:
+      - name: monitor
+        image: python:3.9-slim
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DRIFT_THRESHOLD
+          valueFrom:
+            configMapKeyRef:
+              name: ml-monitoring-config
+              key: drift-threshold
+        command: ["python", "-m", "http.server", "8000"]
