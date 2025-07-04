@@ -1,0 +1,14 @@
+name: Deploy ML Model
+on:
+  push:
+    paths:
+      - 'models/**'
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Deploying model..."
+          kubectl apply -f models/
