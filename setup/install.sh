@@ -117,11 +117,8 @@ esac
 EOF
 chmod +x /usr/local/bin/docker-compose
 
-# Create mc (MinIO client) alias
-echo 'alias mc="/usr/local/bin/lab-scripts/mc-mock.sh"' >> /home/cloud_user/.bashrc
-
-# Create mc mock script
-cat > /usr/local/bin/lab-scripts/mc-mock.sh << 'EOF'
+# Create mc (MinIO client) as executable
+cat > /usr/local/bin/mc << 'EOF'
 #!/bin/bash
 case "$1" in
   config)
@@ -140,14 +137,10 @@ case "$1" in
     ;;
 esac
 EOF
-chmod +x /usr/local/bin/lab-scripts/mc-mock.sh
+chmod +x /usr/local/bin/mc
 
-# Create other aliases
-echo 'alias weaviate-client="/usr/local/bin/lab-scripts/weaviate-mock.sh"' >> /home/cloud_user/.bashrc
-echo 'alias mlflow="/usr/local/bin/lab-scripts/mlflow-mock.sh"' >> /home/cloud_user/.bashrc
-
-# Create weaviate mock
-cat > /usr/local/bin/lab-scripts/weaviate-mock.sh << 'EOF'
+# Create weaviate-client as executable
+cat > /usr/local/bin/weaviate-client << 'EOF'
 #!/bin/bash
 if [[ "$1" == "schema" ]]; then
   echo '{"classes":[{"class":"MLModel","properties":[{"name":"name"},{"name":"version"},{"name":"accuracy"}]}]}'
@@ -155,10 +148,10 @@ elif [[ "$1" == "data" ]]; then
   echo '{"objects":[{"id":"uuid-1","properties":{"name":"iris-classifier","version":"v1","accuracy":0.95}}]}'
 fi
 EOF
-chmod +x /usr/local/bin/lab-scripts/weaviate-mock.sh
+chmod +x /usr/local/bin/weaviate-client
 
-# Create mlflow mock
-cat > /usr/local/bin/lab-scripts/mlflow-mock.sh << 'EOF'
+# Create mlflow as executable
+cat > /usr/local/bin/mlflow << 'EOF'
 #!/bin/bash
 if [[ "$1" == "runs" && "$2" == "list" ]]; then
   echo "Run ID                            Name    Status     Start Time"
@@ -171,7 +164,7 @@ elif [[ "$1" == "models" && "$2" == "list" ]]; then
   echo "iris-classifier   2"
 fi
 EOF
-chmod +x /usr/local/bin/lab-scripts/mlflow-mock.sh
+chmod +x /usr/local/bin/mlflow
 
 # Create setup.sh script
 cat > /home/cloud_user/setup.sh << 'EOF'
