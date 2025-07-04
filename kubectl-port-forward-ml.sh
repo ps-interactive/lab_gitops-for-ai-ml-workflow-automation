@@ -1,10 +1,9 @@
-cat > kubectl-port-forward-ml.sh << 'EOF'
 #!/bin/bash
 echo "Forwarding from 127.0.0.1:8888 -> 80"
 echo "Forwarding from [::1]:8888 -> 80"
 
-# Start a real service that responds on port 8888
-python3 -c '
+# Start the service and keep this script running
+exec python3 -c '
 import http.server
 import socketserver
 import json
@@ -22,7 +21,4 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 with socketserver.TCPServer(("", 8888), Handler) as httpd:
     httpd.serve_forever()
-' &
-EOF
-
-chmod +x kubectl-port-forward-ml.sh
+'
