@@ -392,6 +392,12 @@ cat > /home/cloud_user/.gitconfig << 'EOF'
   email = cloud_user@carvedrock.com
 EOF
 
+# Initialize git repository
+cd /home/cloud_user/gitops-ml-lab
+git init
+git add .
+git commit -m "Initial lab setup"
+
 # Create .github/workflows directory
 mkdir -p /home/cloud_user/gitops-ml-lab/.github/workflows
 cat > /home/cloud_user/gitops-ml-lab/.github/workflows/ml-pipeline.yml << 'EOF'
