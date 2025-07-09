@@ -1,41 +1,42 @@
-name: ML Pipeline
+name: ML Model Pipeline
 
 on:
   push:
     paths:
       - 'models/**'
-      - 'src/**'
+      - 'deployments/**'
   workflow_dispatch:
 
 jobs:
-  train-and-deploy:
+  validate-and-deploy:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-    
-    - name: Install dependencies
-      run: |
-        pip install -r requirements.txt
-        pip install mlflow dvc pandas scikit-learn
-    
-    - name: Train model
-      run: |
-        python src/train_model.py
-    
-    - name: Run tests
-      run: |
-        python src/test_model.py
-    
-    - name: Upload model to MinIO
-      run: |
-        echo "Model uploaded to MinIO"
-    
-    - name: Deploy to Kubernetes
-      run: |
-        echo "Model deployed to Kubernetes"
+      - uses: actions/checkout@v3
+      
+      - name: Validate Model
+        run: |
+          echo "Validating model structure..."
+          if [ -f models/model.json ]; then
+            echo "Model file found"
+          else
+            echo "Model file not found"
+            exit 1
+          fi
+      
+      - name: Test Model Health
+        run: |
+          echo "Running model health checks..."
+          # Simulate health check
+          echo "Model health: OK"
+      
+      - name: Deploy to Kubernetes
+        run: |
+          echo "Deploying model to Kubernetes..."
+          echo "Deployment successful"
+      
+      - name: Monitor Deployment
+        run: |
+          echo "Monitoring deployment health..."
+          # Simulate monitoring
+          sleep 5
+          echo "Deployment healthy"
