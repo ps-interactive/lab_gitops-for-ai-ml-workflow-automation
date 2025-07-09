@@ -1,0 +1,15 @@
+{
+  "model_name": "sample-ml-model",
+  "version": "1.0.0",
+  "type": "classification",
+  "accuracy": 0.95,
+  "parameters": {
+    "learning_rate": 0.01,
+    "epochs": 100,
+    "batch_size": 32
+  },
+  "metadata": {
+    "created_at": "2025-01-09",
+    "author": "CarvedRock ML Team"
+  }
+}
