@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   minio:
     image: minio/minio:latest
@@ -15,7 +14,7 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
-      timeout: 10s
+      timeout: 20s
       retries: 3
 
   weaviate:
@@ -23,22 +22,13 @@ services:
     ports:
       - "8080:8080"
     environment:
+      QUERY_DEFAULTS_LIMIT: 25
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
       DEFAULT_VECTORIZER_MODULE: 'none'
-      ENABLE_MODULES: ''
-      CLUSTER_HOSTNAME: 'node1'
-
-  mlflow:
-    image: python:3.9-slim
-    ports:
-      - "5000:5000"
-    command: >
-      bash -c "pip install mlflow boto3 && 
-               mlflow server --host 0.0.0.0 --backend-store-uri sqlite:///mlflow.db --default-artifact-root s3://carvedrock-ml-models/"
     volumes:
-      - mlflow_data:/mlflow
+      - weaviate_data:/var/lib/weaviate
 
 volumes:
   minio_data:
-  mlflow_data:
+  weaviate_data:
