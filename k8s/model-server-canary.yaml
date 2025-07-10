@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-server-canary
+  labels:
+    app: model-server
+    version: canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-server
+      version: canary
+  template:
+    metadata:
+      labels:
+        app: model-server
+        version: canary
+    spec:
+      containers:
+      - name: model-server
+        image: python:3.9-slim
+        command: ["/bin/sh"]
+        args: ["-c", "pip install flask scikit-learn minio && python -c 'from flask import Flask, jsonify, request; app = Flask(__name__); app.route(\"/health\")(lambda: jsonify({\"status\": \"healthy\", \"version\": \"canary\"})); app.route(\"/predict\", methods=[\"POST\"])(lambda: jsonify({\"prediction\": [0.7, 0.3], \"version\": \"canary\"})); app.run(host=\"0.0.0.0\", port=5000)'"]
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MODEL_NAME
+          value: "canary-model.pkl"
+        - name: MODEL_PATH
+          value: "/models/canary-model.pkl"
+        - name: DEPLOYMENT_TYPE
+          value: "canary"
+        - name: MINIO_ENDPOINT
+          value: "minio:9000"
+        - name: MINIO_ACCESS_KEY
+          value: "minioadmin"
+        - name: MINIO_SECRET_KEY
+          value: "minioadmin"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
