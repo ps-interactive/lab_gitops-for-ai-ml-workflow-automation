@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drift-monitor
+  labels:
+    app: drift-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drift-monitor
+  template:
+    metadata:
+      labels:
+        app: drift-monitor
+    spec:
+      containers:
+      - name: monitor
+        image: python:3.9-slim
+        command: ["/bin/sh"]
+        args: 
+        - -c
+        - |
+          pip install requests
+          cat > /monitor.py << 'EOF'
+          import time
+          import requests
+          import json
+          
+          WEAVIATE_URL = "http://weaviate:8080"
+          ACCURACY_THRESHOLD = 0.8
+          
+          def check_models():
+              query = {
+                  "query": """
+                  {
+                      Get {
+                          MLModel {
+                              modelName
+                              accuracy
+                              deploymentStatus
+                          }
+                      }
+                  }
+                  """
+              }
+              
+              try:
+                  response = requests.post(
+                      f"{WEAVIATE_URL}/v1/graphql",
+                      json=query,
+                      headers={"Content-Type": "application/json"}
+                  )
+                  
+                  if response.status_code == 200:
+                      data = response.json()
+                      models = data.get('data', {}).get('Get', {}).get('MLModel', [])
+                      
+                      for model in models:
+                          if model['deploymentStatus'] == 'deployed':
+                              if model['accuracy'] < ACCURACY_THRESHOLD:
+                                  print(f"ALERT: Model {model['modelName']} accuracy {model['accuracy']} below threshold {ACCURACY_THRESHOLD}")
+                              else:
+                                  print(f"OK: Model {model['modelName']} accuracy {model['accuracy']}")
+              except Exception as e:
+                  print(f"Error checking models: {e}")
+          
+          print("Drift monitor started...")
+          while True:
+              check_models()
+              time.sleep(30)
+          EOF
+          python /monitor.py
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
