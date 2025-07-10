@@ -38,9 +38,27 @@ rm kubectl
 # Install k3s
 echo "Installing k3s (Kubernetes)..."
 curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--write-kubeconfig-mode 644" sh -
+
+# Wait for k3s to be ready
+echo "Waiting for k3s to start..."
+sleep 10
+
+# Setup kubeconfig
 mkdir -p ~/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml ~/.kube/config
 sudo chown $(id -u):$(id -g) ~/.kube/config
+export KUBECONFIG=~/.kube/config
+
+# Wait for k3s to be fully ready
+echo "Waiting for k3s to be ready..."
+for i in {1..30}; do
+    if kubectl get nodes >/dev/null 2>&1; then
+        echo "k3s is ready!"
+        break
+    fi
+    echo -n "."
+    sleep 2
+done
 
 # Install Python packages
 echo "Installing Python packages..."
