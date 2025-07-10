@@ -3,6 +3,7 @@ version: '3.8'
 services:
   minio:
     image: minio/minio:latest
+    container_name: minio
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -20,21 +21,16 @@ services:
 
   weaviate:
     image: semitechnologies/weaviate:1.23.0
+    container_name: weaviate
     ports:
       - "8080:8080"
     environment:
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      DEFAULT_VECTORIZER_MODULE: 'text2vec-transformers'
-      ENABLE_MODULES: 'text2vec-transformers'
-      TRANSFORMERS_INFERENCE_API: 'http://t2v-transformers:8080'
+      DEFAULT_VECTORIZER_MODULE: 'none'
+      ENABLE_MODULES: ''
     volumes:
       - weaviate_data:/var/lib/weaviate
-
-  t2v-transformers:
-    image: semitechnologies/transformers-inference:sentence-transformers-multi-qa-MiniLM-L6-cos-v1
-    environment:
-      ENABLE_CUDA: '0'
 
 volumes:
   minio_data:
