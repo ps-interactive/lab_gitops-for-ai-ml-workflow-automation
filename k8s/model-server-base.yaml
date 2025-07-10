@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-server
+  labels:
+    app: model-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-server
+  template:
+    metadata:
+      labels:
+        app: model-server
+    spec:
+      containers:
+      - name: model-server
+        image: python:3.9-slim
+        command: ["/bin/sh"]
+        args: ["-c", "pip install flask scikit-learn minio && python -c 'from flask import Flask, jsonify, request; app = Flask(__name__); app.route(\"/health\")(lambda: jsonify({\"status\": \"healthy\"})); app.route(\"/predict\", methods=[\"POST\"])(lambda: jsonify({\"prediction\": [0.8, 0.2]})); app.run(host=\"0.0.0.0\", port=5000)'"]
+        ports:
+        - containerPort: 5000
+        env:
+        - name: MODEL_NAME
+          value: "default-model.pkl"
+        - name: MODEL_PATH
+          value: "/models/default-model.pkl"
+        - name: MINIO_ENDPOINT
+          value: "minio:9000"
+        - name: MINIO_ACCESS_KEY
+          value: "minioadmin"
+        - name: MINIO_SECRET_KEY
+          value: "minioadmin"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
