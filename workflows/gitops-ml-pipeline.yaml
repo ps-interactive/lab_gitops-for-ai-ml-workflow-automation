@@ -1,0 +1,84 @@
+name: GitOps ML Pipeline
+
+on:
+  push:
+    paths:
+      - 'models/**'
+      - 'configs/**'
+  workflow_dispatch:
+
+env:
+  MINIO_ENDPOINT: minio:9000
+  MINIO_ACCESS_KEY: minioadmin
+  MINIO_SECRET_KEY: minioadmin
+  WEAVIATE_URL: http://weaviate:8080
+
+jobs:
+  validate-model:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    
+    - name: Install dependencies
+      run: |
+        pip install scikit-learn numpy pandas
+    
+    - name: Validate model
+      run: |
+        python scripts/validate-model.py
+    
+    outputs:
+      model_name: ${{ steps.model_info.outputs.name }}
+      model_accuracy: ${{ steps.model_info.outputs.accuracy }}
+
+  deploy-model:
+    needs: validate-model
+    runs-on: ubuntu-latest
+    if: ${{ needs.validate-model.outputs.model_accuracy > 0.8 }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/model-server-base.yaml
+        kubectl set env deployment/model-server MODEL_NAME=${{ needs.validate-model.outputs.model_name }}
+        kubectl rollout status deployment/model-server
+    
+    - name: Register in Weaviate
+      run: |
+        python scripts/register-model.py \
+          --model ${{ needs.validate-model.outputs.model_name }} \
+          --accuracy ${{ needs.validate-model.outputs.model_accuracy }}
+
+  monitor-deployment:
+    needs: deploy-model
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check deployment health
+      run: |
+        kubectl wait --for=condition=available --timeout=300s deployment/model-server
+    
+    - name: Run smoke tests
+      run: |
+        kubectl port-forward svc/model-server 5000:5000 &
+        sleep 5
+        curl -f http://localhost:5000/health
+        curl -X POST http://localhost:5000/predict \
+          -H "Content-Type: application/json" \
+          -d '{"features": [1.0, 2.0, 3.0, 4.0]}'
+    
+    - name: Check drift
+      run: |
+        python scripts/check-and-rollback.py
