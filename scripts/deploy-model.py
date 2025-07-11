@@ -14,6 +14,7 @@ def deploy_model(model_name, replicas=1, canary=False):
                 "spec": {
                     "containers": [{
                         "name": "model-server",
+                        "image": "python:3.9-slim",
                         "env": [
                             {"name": "MODEL_NAME", "value": model_name},
                             {"name": "MODEL_PATH", "value": f"/models/{model_name}"}
@@ -29,7 +30,7 @@ def deploy_model(model_name, replicas=1, canary=False):
     cmd = [
         "kubectl", "patch", "deployment", deployment_name,
         "-n", "ml-models",
-        "--type", "merge",
+        "--type", "strategic",
         "-p", patch_json
     ]
     
