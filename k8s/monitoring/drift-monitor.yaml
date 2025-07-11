@@ -17,26 +17,20 @@ spec:
       containers:
       - name: monitor
         image: python:3.9-slim
-        command: ["/bin/sh"]
-        args: 
-        - -c
+        command: ["python", "-c"]
+        args:
         - |
-          cat > /monitor.py << 'EOF'
           import time
           import os
           
           ACCURACY_THRESHOLD = 0.8
           
           def check_models():
-              # For demo purposes, we'll simulate checking model accuracy
               model_name = os.environ.get('MODEL_NAME', 'test-model-v1.pkl')
-              
-              # In a real scenario, this would query Weaviate or a metrics store
-              # For the lab, we'll simulate degradation detection
               print(f"Checking model: {model_name}")
               
-              # Simulate accuracy check
-              simulated_accuracy = 0.62  # This matches what was set by simulate-drift.py
+              # Simulate accuracy check (matches simulate-drift.py output)
+              simulated_accuracy = 0.62
               
               if simulated_accuracy < ACCURACY_THRESHOLD:
                   print(f"ALERT: Model {model_name} accuracy {simulated_accuracy} below threshold {ACCURACY_THRESHOLD}")
@@ -50,8 +44,6 @@ spec:
           while True:
               check_models()
               time.sleep(30)
-          EOF
-          python /monitor.py
         env:
         - name: MODEL_NAME
           value: "test-model-v1.pkl"
