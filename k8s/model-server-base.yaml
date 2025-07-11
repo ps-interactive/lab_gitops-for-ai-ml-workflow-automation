@@ -18,7 +18,26 @@ spec:
       - name: model-server
         image: python:3.9-slim
         command: ["/bin/sh"]
-        args: ["-c", "pip install flask scikit-learn minio && python -c 'from flask import Flask, jsonify, request; app = Flask(__name__); app.route(\"/health\")(lambda: jsonify({\"status\": \"healthy\"})); app.route(\"/predict\", methods=[\"POST\"])(lambda: jsonify({\"prediction\": [0.8, 0.2]})); app.run(host=\"0.0.0.0\", port=5000)'"]
+        args: 
+        - -c
+        - |
+          pip install flask scikit-learn minio
+          cat > /app.py << 'EOF'
+          from flask import Flask, jsonify, request
+          app = Flask(__name__)
+          
+          @app.route('/health')
+          def health():
+              return jsonify({"status": "healthy"})
+          
+          @app.route('/predict', methods=['POST'])
+          def predict():
+              return jsonify({"prediction": [0.8, 0.2]})
+          
+          if __name__ == '__main__':
+              app.run(host='0.0.0.0', port=5000)
+          EOF
+          python /app.py
         ports:
         - containerPort: 5000
         env:
@@ -34,8 +53,8 @@ spec:
           value: "minioadmin"
         resources:
           requests:
-            memory: "128Mi"
+            memory: "256Mi"
             cpu: "100m"
           limits:
-            memory: "256Mi"
-            cpu: "200m"
+            memory: "512Mi"
+            cpu: "500m"
